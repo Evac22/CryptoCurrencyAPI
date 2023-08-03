@@ -18,7 +18,7 @@ namespace Mydev.BinanceApi
                 options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"));
             });
 
-
+            builder.Services.AddScoped<ICryptoCurrencyRepository, CryptoCurrencyRepository>();
 
             builder.Services.AddRouting();
             builder.Services.AddEndpointsApiExplorer();
@@ -35,36 +35,32 @@ namespace Mydev.BinanceApi
             app.UseRouting();
 
             // Define your endpoints directly here
-            app.MapGet("/cryptoCurrency", async (CryptoCurrencyDb db) => db.cryptoCurrencies.ToListAsync());
-            app.MapGet("/cryptoCurrency/{id}", async (int id, CryptoCurrencyDb db) =>
-            await db.cryptoCurrencies.FirstOrDefaultAsync(c => c.Id == id) is CryptoCurrency cryptoCurrency
+            app.MapGet("/cryptoCurrency", async (ICryptoCurrencyRepository repository) =>
+                Results.Ok(await repository.GetCryptoCurrenciesAsync()));
+            app.MapGet("/cryptoCurrency/{id}", async (int id, ICryptoCurrencyRepository repository) =>
+            await repository.GetCryptoCurrencyAsync(id) is CryptoCurrency cryptoCurrency
             ? Results.Ok(cryptoCurrency)
             : Results.NotFound());
 
-            app.MapPost("/cryptoCurrency", async ([FromBody] CryptoCurrency cryptoCurrency, [FromServices] CryptoCurrencyDb db) =>         
+            app.MapPost("/cryptoCurrency", async ([FromBody] CryptoCurrency cryptoCurrency, ICryptoCurrencyRepository repository) =>         
             {
-                db.cryptoCurrencies.Add(cryptoCurrency);
-                await db.SaveChangesAsync();
+                await repository.InsertCryptoCurrencyAsync(cryptoCurrency);
+                await repository.SaveAsync();
                 return Results.Created($"/cryptoCurrency/{cryptoCurrency.Id}", cryptoCurrency);
             });
 
-            app.MapPut("/cryptoCurrency", async ([FromBody] CryptoCurrency cryptoCurrency, CryptoCurrencyDb db) =>
+            app.MapPut("/cryptoCurrency", async ([FromBody] CryptoCurrency cryptoCurrency, ICryptoCurrencyRepository repository) =>
             {
-                var cryptoCurrencyFromDb = await db.cryptoCurrencies.FindAsync(new object[] { cryptoCurrency.Id });
-                if (cryptoCurrencyFromDb == null) return Results.NotFound();
-                cryptoCurrencyFromDb.Symbol = cryptoCurrency.Symbol;
-                cryptoCurrencyFromDb.Price = cryptoCurrency.Price;
-                await db.SaveChangesAsync();
+                await repository.UpdateCryptoCurrencyAsync(cryptoCurrency);
+                await repository.SaveAsync();
                 return Results.NoContent();
             });
                 
            
-            app.MapDelete("/cryptoCurrency/{id}", async (int id, CryptoCurrencyDb db) => 
+            app.MapDelete("/cryptoCurrency/{id}", async (int id, ICryptoCurrencyRepository repository) => 
             {
-                var cryptoCurrencyFromDb = await db.cryptoCurrencies.FindAsync(new object[] { id });
-                if (cryptoCurrencyFromDb == null) return Results.NotFound();
-                db.cryptoCurrencies.Remove(cryptoCurrencyFromDb);
-                await db.SaveChangesAsync();
+                await repository.DeleteCryptoCurrencyAsync(id);
+                await repository.SaveAsync();
                 return Results.NoContent();
             });
 
