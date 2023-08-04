@@ -13,7 +13,20 @@ namespace MyDev.BinanceApi.Data
 
         public Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync(string name) =>
              _context.cryptoCurrencies.Where(c => c.Symbol.Contains(name)).ToListAsync();
-        
+
+
+        public async Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync(CryptoSearch cryptoSearch)
+        {           
+            string symbolString = cryptoSearch.Symbol.ToString();
+
+            return await _context.cryptoCurrencies
+                .Where(c =>
+                    c.Symbol == symbolString &&
+                    c.Price > cryptoSearch.Price - 1 &&
+                    c.Price < cryptoSearch.Price + 1
+                )
+                .ToListAsync();
+        }
 
         public Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync() => _context.cryptoCurrencies.ToListAsync();
 

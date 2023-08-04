@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MyDev.BinanceApi;
 using MyDev.BinanceApi.Data;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -42,7 +43,7 @@ namespace Mydev.BinanceApi
 
             // Define your endpoints directly here
             app.MapGet("/cryptoCurrency", async (ICryptoCurrencyRepository repository) =>
-                Results.Ok(await repository.GetCryptoCurrenciesAsync()))
+                Results.Extensions.Xml(await repository.GetCryptoCurrenciesAsync()))
                 .Produces<List<CryptoCurrency>>(StatusCodes.Status200OK)
                 .WithName("GetAllCryptoCurrency")
                 .WithTags("Getters");
@@ -96,6 +97,14 @@ namespace Mydev.BinanceApi
                 .WithName("SearchCryptoCurrenty")
                 .WithTags("Getters")
                 .ExcludeFromDescription();
+
+            app.MapGet("/cryptoCurrency/search/crypto/{cryptoSearch}",
+                async (CryptoSearch cryptoSearch, ICryptoCurrencyRepository repository) =>
+                   await repository.GetCryptoCurrenciesAsync(cryptoSearch) is IEnumerable<CryptoCurrency> cryptos
+                       ? Results.Ok(cryptos)
+                       : Results.NotFound(Array.Empty<CryptoCurrency>()))
+                  .ExcludeFromDescription();
+                
                 
             app.UseHttpsRedirection();
 
@@ -104,5 +113,3 @@ namespace Mydev.BinanceApi
     }
 
 }
-
-
