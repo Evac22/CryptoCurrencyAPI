@@ -1,4 +1,6 @@
-﻿namespace MyDev.BinanceApi.Data
+﻿using SQLitePCL;
+
+namespace MyDev.BinanceApi.Data
 {
     public class CryptoCurrencyRepository : ICryptoCurrencyRepository
     {
@@ -8,6 +10,10 @@
         {
             _context = context;
         }
+
+        public Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync(string name) =>
+             _context.cryptoCurrencies.Where(c => c.Symbol.Contains(name)).ToListAsync();
+        
 
         public Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync() => _context.cryptoCurrencies.ToListAsync();
 
@@ -53,7 +59,8 @@
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }         
-      
+        }
+
+        
     }
 }

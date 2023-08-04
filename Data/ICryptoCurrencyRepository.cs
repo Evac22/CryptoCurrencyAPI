@@ -4,6 +4,8 @@
     {
         Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync();
 
+        Task<List<CryptoCurrency>> GetCryptoCurrenciesAsync(string name);
+
         Task<CryptoCurrency> GetCryptoCurrencyAsync(int cryptoCurrencyId);
 
         Task InsertCryptoCurrencyAsync(CryptoCurrency cryptoCurrency);
