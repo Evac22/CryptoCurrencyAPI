@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using System;
 
 namespace MyDev.BinanceApi
 {
@@ -14,5 +15,15 @@ namespace MyDev.BinanceApi
             cryptoSearch = new CryptoSearch(symbol, price);
             return true;
         }
+
+        public static async ValueTask<CryptoSearch?> BindAsync(HttpContext context,
+       ParameterInfo parameter)
+        {
+            var input = context.GetRouteValue(parameter.Name!) as string ?? string.Empty;
+            TryParse(input, out var cryptoSearch);
+            return cryptoSearch;
+        }   
     }
+
+   
 }
