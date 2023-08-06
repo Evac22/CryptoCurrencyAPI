@@ -2,10 +2,11 @@ using MyDev.BinanceApi.Auth;
 using MyDev.BinanceApi.Data;
 using MyDev.BinanceApi;
 using MyDev.BinanceApi.Apis;
+using MyDev.BinanceApi.ApiClients;
 
 var builder = WebApplication.CreateBuilder(args);
 
-RegisterServices(builder.Services);
+ConfigureServices(builder.Services);
 
 var app = builder.Build();
 
@@ -20,7 +21,7 @@ foreach(var api in apis)
 
 app.Run();
 
-void RegisterServices(IServiceCollection services)
+void ConfigureServices(IServiceCollection services)
 {
     services.AddEndpointsApiExplorer();
     services.AddSwaggerGen();
@@ -30,32 +31,38 @@ void RegisterServices(IServiceCollection services)
     });
 
     services.AddScoped<ICryptoCurrencyRepository, CryptoCurrencyRepository>();
-    services.AddSingleton<ITokenService>(new TokenService());
-    services.AddSingleton<IUserRepository>(new UserRepository());
+    services.AddSingleton<ITokenService, TokenService>();
+    services.AddSingleton<IUserRepository, UserRepository>();
     services.AddAuthorization();
     services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-         .AddJwtBearer(options =>
-         {
-             options.TokenValidationParameters = new()
-             {
-                 ValidateIssuer = true,
-                 ValidateAudience = true,
-                 ValidateLifetime = true,
-                 ValidateIssuerSigningKey = true,
-                 ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                 ValidAudience = builder.Configuration["Jwt:Audience"],
-                 IssuerSigningKey = new SymmetricSecurityKey(
-                     Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-             };
-         });
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new()
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            };
+        });
 
     services.AddTransient<IApi, CryptoCurrencyApi>();
     services.AddTransient<IApi, AuthApi>();
-
+    services.AddHttpClient<BinanceApiClient>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.binance.com/api/v3");
+    });
 }
+
 
 void Configure(WebApplication app)
 {
+    app.UseRouting();
+    app.UseHttpsRedirection();
     app.UseAuthentication();
     app.UseAuthorization();
 
@@ -69,5 +76,5 @@ void Configure(WebApplication app)
         db.Database.EnsureCreated();
     }
 
-    app.UseHttpsRedirection();
+   
 }

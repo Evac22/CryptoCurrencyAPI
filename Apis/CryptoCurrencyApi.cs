@@ -45,7 +45,7 @@ namespace MyDev.BinanceApi.Apis
 
         }
 
-        [Authorize]
+        //[Authorize]
         private async Task<IResult> Get(ICryptoCurrencyRepository repository) =>
                  Results.Extensions.Xml(await repository.GetCryptoCurrenciesAsync());
 
